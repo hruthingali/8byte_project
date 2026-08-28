@@ -1,0 +1,9 @@
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/ExpensetrackerApplication.java
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/controller/AuthController.java
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/controller/ExpenseController.java
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/model/Expense.java
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/model/User.java
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/repository/ExpenseRepository.java
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/repository/UserRepository.java
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/security/SecurityConfig.java
+/home/hruthin/8byte_project/src/main/java/com/example/expensetracker/service/UserService.java
