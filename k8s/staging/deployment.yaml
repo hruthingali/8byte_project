@@ -29,7 +29,7 @@ spec:
 
           env:
             - name: DB_HOST
-              value: "rds_endpoint"
+              value: "terraform-1f38b9500936fcf2db68d8b318.cezwwc8au2kj.us-east-1.rds.amazonaws.com"
 
             - name: DB_PORT
               value: "5432"
@@ -38,10 +38,10 @@ spec:
               value: "expensetracker"
 
             - name: DB_USER
-              value: "username"
+              value: "postgres"
 
             - name: DB_PASSWORD
-              value: "password"
+              value: "password123"
 
           resources:
             requests:
