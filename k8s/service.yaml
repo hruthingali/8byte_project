@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: expense-tracker-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: expense-tracker
   ports:
