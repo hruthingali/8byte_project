@@ -22,7 +22,7 @@ spec:
       containers:
         - name: expense-tracker
 
-          image: hruthingali/expense-tracker:latest
+          image: hruthingali/expensetracker:latest
 
           ports:
             - containerPort: 8081
