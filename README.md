@@ -1,5 +1,5 @@
 # Expense Tracker DevOps Assignment
-![Uploading Screenshot 2026-08-30 151216.png…]()
+<img width="1097" height="394" alt="Screenshot 2026-08-30 151216" src="https://github.com/user-attachments/assets/184386e6-e7de-4110-92e5-fe5a634b72cd" />
 
 ## Project Overview
 
