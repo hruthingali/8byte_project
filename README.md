@@ -869,9 +869,7 @@ The project also involved troubleshooting real AWS and Kubernetes dependency iss
 
 Overall, the project demonstrates practical experience with Infrastructure as Code, CI/CD, Docker, Kubernetes, AWS EKS, GitOps, database integration, container security, monitoring, and troubleshooting.
 
-**screenshots :**
-<img width="1477" height="735" alt="Screenshot 2026-08-30 105933" src="https://github.com/user-attachments/assets/633d5d9d-6d4f-4be5-a5e5-24f4352f4689" />
-<img width="1898" height="942" alt="Screenshot 2026-08-30 132626" src="https://github.com/user-attachments/assets/86d129c1-da63-4333-8b23-a07630cc30cd" />
+
 
 
 
