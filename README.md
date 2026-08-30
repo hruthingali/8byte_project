@@ -1,89 +1,103 @@
-# 8byte_project
-<img width="1097" height="394" alt="image" src="https://github.com/user-attachments/assets/51cba3e1-1ae0-4c21-be9c-c000f3a3b6c2" />
-# Expense Tracker DevOps Project
+# Expense Tracker DevOps Assignment
+![Uploading Screenshot 2026-08-30 151216.png…]()
 
-## Overview
+## Project Overview
 
-This project was developed as part of the DevOps technical assignment for Octa Byte AI Pvt Ltd.
+This project was developed as part of the DevOps Technical Assignment for 8Byte.ai.
 
-The objective of the project is to demonstrate an end-to-end DevOps workflow including infrastructure provisioning, application containerization, continuous integration, security scanning, Kubernetes deployment, GitOps-based deployment, database integration, monitoring, logging, and operational troubleshooting.
+The objective of this project is to demonstrate an end-to-end DevOps workflow covering infrastructure provisioning, CI/CD, containerization, Kubernetes deployment, database integration, security scanning, monitoring, logging, and documentation.
 
-The application used for the assignment is an Expense Tracker application. The main focus of the project is the DevOps implementation rather than the application business logic.
+The application used for this assignment is an Expense Tracker application. The primary focus of the project is the DevOps implementation rather than the application business logic.
 
 The infrastructure is hosted on AWS and the application is deployed on Amazon EKS. PostgreSQL is used as the application database and is hosted on Amazon RDS.
 
+The project uses Terraform for Infrastructure as Code, Jenkins for Continuous Integration, Docker and Docker Hub for containerization and image management, Trivy for vulnerability scanning, Argo CD for GitOps-based deployment, and Amazon CloudWatch for monitoring and logging.
+
 ## Architecture
 
-The overall deployment flow is:
+The overall architecture of the project is:
 
 ```text
-Developer
-    |
-    v
-GitHub
-    |
-    v
-Jenkins
-    |
-    +----------------------+
-    |                      |
-    v                      v
-Maven Build          Docker Build
-                           |
-                           v
-                     Trivy Scan
-                           |
-                           v
-                     Docker Hub
-                           |
-                           v
-                  Update Kubernetes
-                     Manifests
-                           |
-                           v
-                        GitHub
-                           |
-                           v
-                       Argo CD
-                       /      \
-                      /        \
-                     v          v
-                Staging      Production
-                Auto Sync    Manual Sync
-                     \          /
-                      \        /
-                       v      v
-                      Amazon EKS
-                           |
-                           v
-                    Expense Tracker
-                           |
-                           v
-                  Amazon RDS PostgreSQL
+                         Developer
+                             |
+                             v
+                          GitHub
+                             |
+                             v
+                          Jenkins
+                             |
+             +---------------+---------------+
+             |               |               |
+             v               v               v
+          Maven Build   Docker Build    Trivy Scan
+                                             |
+                                             v
+                                        Docker Hub
+                                             |
+                                             v
+                                  Update Kubernetes
+                                      Manifests
+                                             |
+                                             v
+                                           GitHub
+                                             |
+                                             v
+                                          Argo CD
+                                       /           \
+                                      /             \
+                                     v               v
+                                Staging          Production
+                               Auto Sync         Manual Sync
+                                    |                 |
+                                    +--------+--------+
+                                             |
+                                             v
+                                        Amazon EKS
+                                             |
+                                             v
+                                    Expense Tracker
+                                             |
+                                             v
+                                  Amazon RDS PostgreSQL
+
+
+                         Amazon EKS
+                             |
+                             v
+              CloudWatch Observability Controller
+                             |
+                             v
+                     CloudWatch Agent
+                             |
+                             v
+                     Amazon CloudWatch
+                        /          \
+                       v            v
+                 Dashboard 1    Dashboard 2
+                 EKS Metrics    Application &
+                                Database Metrics
 ```
 
-CloudWatch monitoring is configured using the Amazon CloudWatch Observability Controller inside the EKS cluster.
-
 ## Technology Stack
-
-The following technologies are used in the project:
 
 | Technology            | Purpose                              |
 | --------------------- | ------------------------------------ |
 | AWS                   | Cloud infrastructure                 |
 | Terraform             | Infrastructure as Code               |
 | Amazon VPC            | Network isolation                    |
-| Amazon EKS            | Kubernetes cluster                   |
-| Amazon RDS PostgreSQL | Persistent database                  |
+| Amazon EKS            | Kubernetes application hosting       |
+| Amazon RDS PostgreSQL | Persistent application database      |
 | Docker                | Application containerization         |
 | Docker Hub            | Container image registry             |
 | Jenkins               | Continuous Integration               |
 | Maven                 | Application build                    |
 | Trivy                 | Container vulnerability scanning     |
 | Kubernetes            | Container orchestration              |
-| Argo CD               | GitOps-based Continuous Deployment   |
+| Argo CD               | GitOps-based deployment              |
 | Amazon CloudWatch     | Monitoring and logging               |
 | GitHub                | Source code and Kubernetes manifests |
+
+# Part 1: Infrastructure Provisioning
 
 ## AWS Infrastructure
 
@@ -104,11 +118,11 @@ The infrastructure includes:
 
 The VPC provides network isolation for the application environment.
 
-Public subnets are used for internet-facing resources, while private subnets are used for internal workloads and database resources.
+Public subnets are used for resources that require internet connectivity, while private subnets are used for internal application workloads and database resources.
 
-The Internet Gateway provides internet connectivity for resources in public subnets.
+The Internet Gateway provides internet connectivity for public resources.
 
-The NAT Gateway provides outbound internet connectivity for resources in private subnets without exposing them directly to the internet.
+The NAT Gateway provides outbound internet connectivity to resources in private subnets without exposing those resources directly to the internet.
 
 ## Network Architecture
 
@@ -118,7 +132,7 @@ The VPC uses the CIDR range:
 10.0.0.0/16
 ```
 
-The network is divided into public and private subnets across Availability Zones.
+The network is divided into public and private subnets.
 
 The general network structure is:
 
@@ -128,8 +142,6 @@ AWS VPC
 +-- Public Subnet
 |     |
 |     +-- Load Balancer
-|     |
-|     +-- Internet Gateway
 |
 +-- Public Subnet
 |
@@ -142,24 +154,24 @@ AWS VPC
       +-- RDS PostgreSQL
 ```
 
-The database is kept in private networking so that it is not directly exposed to the public internet.
+The RDS database is kept in private networking so that it is not directly exposed to the public internet.
 
-## Infrastructure as Code
+## Terraform
 
-Terraform is used to provision the AWS infrastructure.
+Terraform is used to provision and manage the AWS infrastructure.
 
-The Terraform configuration uses variables so that infrastructure values can be changed without modifying the main resource definitions.
+The Terraform configuration uses variables for configurable infrastructure parameters.
 
 The Terraform project contains configuration files such as:
 
 ```text
 8byte_terraform/
 
-main.tf
-variables.tf
-outputs.tf
-providers.tf
-terraform.tfvars
+    main.tf
+    variables.tf
+    outputs.tf
+    providers.tf
+    terraform.tfvars
 ```
 
 The basic Terraform workflow is:
@@ -177,57 +189,84 @@ To destroy the infrastructure:
 terraform destroy
 ```
 
-Terraform outputs are used to expose important infrastructure information such as VPC IDs, subnet IDs, and other resource information.
+## Terraform Variables
+
+Configurable infrastructure parameters are maintained in `variables.tf`.
+
+This allows values such as AWS region, VPC CIDR, subnet configuration, and other infrastructure parameters to be changed without modifying the main resource definitions.
 
 ## Terraform State Management
 
-Terraform state is used to maintain information about the infrastructure managed by Terraform.
+Terraform state is used to track the resources managed by Terraform.
 
-For a shared or production environment, Terraform state can be stored remotely using Amazon S3 with state locking.
+Terraform state should not be committed to the GitHub repository because it can contain sensitive infrastructure information.
 
-Terraform state files should not be committed to the GitHub repository because they can contain sensitive infrastructure information.
+For a production environment, remote Terraform state using Amazon S3 with state locking would be preferred to allow secure collaboration and prevent concurrent state modifications.
 
-During the project, an important troubleshooting issue was encountered where some AWS resources existed in the environment but were not present in the current Terraform state.
+## Terraform Outputs
 
-This was handled by identifying the resources using AWS CLI and cleaning up the dependent resources before deleting the infrastructure.
+Terraform outputs are used to expose important infrastructure information.
 
-## Application
+Examples include:
 
-The application used for the assignment is an Expense Tracker application.
+* VPC ID
+* Subnet IDs
+* Resource identifiers
+* Other important infrastructure information
 
-The application allows users to manage expense-related information.
+# Amazon EKS
 
-The application uses PostgreSQL for persistent data storage.
+Amazon EKS is used as the application hosting platform.
 
-The application is packaged into a Docker container and deployed to Amazon EKS.
+The Expense Tracker application runs as Kubernetes workloads inside the EKS cluster.
 
-The application does not depend on local container storage for persistent database information.
+Kubernetes Deployments are used to manage application Pods and Kubernetes Services are used to expose the application.
 
-## Docker
+Multiple replicas are configured for the application to improve availability.
 
-Docker is used to package the application and its dependencies into a container image.
+The EKS cluster can be verified using:
 
-The Docker image is built by Jenkins.
-
-The Docker Hub repository used for the project is:
-
-```text
-hruthingali/expensetracker
+```bash
+kubectl get nodes
 ```
 
-The Jenkins pipeline creates a unique image tag using the Jenkins build number.
+Application Pods can be checked using:
 
-For example:
-
-```text
-hruthingali/expensetracker:15
+```bash
+kubectl get pods -A
 ```
 
-Using the Jenkins build number makes it possible to identify the exact image associated with a Jenkins build.
+Services can be checked using:
+
+```bash
+kubectl get svc -A
+```
+
+# Amazon RDS PostgreSQL
+
+PostgreSQL is used as the persistent database for the Expense Tracker application.
+
+The database is hosted using Amazon RDS for PostgreSQL.
+
+The application running inside EKS connects to the RDS PostgreSQL database.
+
+Using Amazon RDS keeps the database independent from the application containers and provides a managed database service.
+
+## Database Security
+
+The RDS database is protected using AWS Security Groups.
+
+Access to PostgreSQL is restricted to the required application resources.
+
+The database is kept in private networking and is not intended to be directly accessible from the public internet.
+
+Database credentials are provided to the Kubernetes application using Kubernetes Secrets rather than being stored directly in the application source code.
+
+# Part 2: Deployment Automation
 
 ## Jenkins CI Pipeline
 
-Jenkins is used to automate the Continuous Integration process.
+Jenkins is used to automate the Continuous Integration workflow.
 
 The Jenkins pipeline contains the following stages:
 
@@ -238,23 +277,23 @@ The Jenkins pipeline contains the following stages:
 5. Push Docker Image
 6. Update Kubernetes Manifests
 
-## Checkout
+## Source Code Checkout
 
 Jenkins checks out the application source code from the main branch of GitHub.
 
-The repository used for the project is:
+Repository:
 
 ```text
 https://github.com/hruthingali/8byte_project.git
 ```
 
-GitHub credentials are stored securely in Jenkins Credentials and are not hardcoded as plain passwords in the pipeline.
+GitHub credentials are stored securely in Jenkins Credentials.
 
-## Application Build
+## Maven Build
 
 The application is built using Maven.
 
-The current pipeline uses:
+The current Jenkins pipeline executes:
 
 ```bash
 mvn clean install -DskipTests
@@ -264,117 +303,95 @@ Tests are skipped during the current Docker deployment build.
 
 ## Docker Image Build
 
-Jenkins builds the Docker image using the Jenkins build number.
+Jenkins builds the Docker image using the Jenkins build number as the image tag.
 
-The command used is equivalent to:
+For example:
 
-```bash
-docker build -t hruthingali/expensetracker:${BUILD_NUMBER} .
+```text
+hruthingali/expensetracker:15
 ```
 
-This creates a uniquely tagged image for every Jenkins build.
+Using the Jenkins build number makes each Docker image identifiable by the Jenkins build that produced it.
 
-## Trivy Security Scan
+## Trivy Vulnerability Scan
 
 Trivy is used to scan the Docker image for known vulnerabilities.
 
-The pipeline checks for HIGH and CRITICAL vulnerabilities.
+The pipeline checks for HIGH and CRITICAL severity vulnerabilities.
 
-The scan is configured to fail the pipeline when vulnerabilities matching the configured severity are detected.
+The pipeline is configured to fail when vulnerabilities matching the configured criteria are detected.
 
-The command used is:
+The scan is performed before the image is pushed to Docker Hub.
+
+The command used by the pipeline is:
 
 ```bash
 trivy image \
     --severity HIGH,CRITICAL \
     --exit-code 1 \
     --no-progress \
-    hruthingali/expensetracker:${BUILD_NUMBER}
+    ${DOCKER_IMAGE}:${BUILD_NUMBER}
 ```
 
-This provides a security check before the image is pushed to Docker Hub.
+This provides a security check before the container image is published.
 
-## Push Docker Image
+## Docker Hub
 
-After a successful Trivy scan, Jenkins authenticates with Docker Hub using credentials stored in Jenkins.
+After the Trivy scan succeeds, Jenkins pushes the Docker image to Docker Hub.
 
-The image is then pushed to Docker Hub.
-
-The image format is:
+The Docker Hub repository is:
 
 ```text
-hruthingali/expensetracker:<BUILD_NUMBER>
+hruthingali/expensetracker
 ```
 
-Docker Hub credentials are not stored directly inside the Jenkinsfile.
+Images are tagged using the Jenkins build number.
 
-## Update Kubernetes Manifests
-
-After the Docker image is pushed, Jenkins updates the Docker image tag in both the staging and production Kubernetes deployment files.
-
-The files are:
+For example:
 
 ```text
-k8s/staging/deployment.yaml
+hruthingali/expensetracker:20
+```
 
-k8s/production/deployment.yaml
+Docker Hub credentials are stored securely in Jenkins Credentials.
+
+# Kubernetes Manifest Update
+
+After successfully pushing the Docker image, Jenkins updates the image tag in the Kubernetes deployment manifests.
+
+The manifests are maintained separately for staging and production:
+
+```text
+k8s/
+
+    staging/
+        deployment.yaml
+
+    production/
+        deployment.yaml
 ```
 
 Jenkins replaces the previous image tag with the current Jenkins build number.
 
-The updated Kubernetes manifests are committed and pushed back to the main branch of GitHub.
+The updated Kubernetes manifests are committed and pushed back to GitHub.
 
-This allows GitHub to contain the desired state of the Kubernetes deployments.
+This allows GitHub to act as the source of truth for the desired Kubernetes state.
 
-## CI/CD Flow
+# Argo CD
 
-The implemented CI/CD workflow is:
+Argo CD is used for GitOps-based Continuous Deployment.
 
-```text
-Developer
-    |
-    v
-GitHub
-    |
-    v
-Jenkins
-    |
-    +-- Checkout
-    |
-    +-- Maven Build
-    |
-    +-- Docker Build
-    |
-    +-- Trivy Scan
-    |
-    +-- Push Docker Image
-    |
-    +-- Update Kubernetes Manifests
-    |
-    v
-GitHub
-    |
-    v
-Argo CD
-```
+Argo CD monitors the Kubernetes manifests stored in GitHub.
 
-## GitOps with Argo CD
+When Jenkins updates the Kubernetes manifests and pushes the changes to GitHub, Argo CD detects the difference between the desired state in Git and the state running in Kubernetes.
 
-Argo CD is used for Continuous Deployment using the GitOps approach.
+Separate Argo CD applications are configured for staging and production.
 
-The Kubernetes manifests are stored in GitHub.
+# Staging Deployment
 
-Jenkins updates the image tag in the Kubernetes manifests and pushes the changes to GitHub.
+The staging Argo CD application has automatic synchronization enabled.
 
-Argo CD monitors the repository and detects changes to the Kubernetes configuration.
-
-The desired Kubernetes state is therefore maintained in Git.
-
-## Staging Deployment
-
-The staging Argo CD application is configured with automatic synchronization enabled.
-
-When Jenkins updates the staging deployment manifest and pushes the change to GitHub, Argo CD detects the change and automatically synchronizes the staging application.
+When Jenkins updates the staging Kubernetes deployment manifest and pushes the change to GitHub, Argo CD detects the change and automatically synchronizes the staging environment.
 
 The staging deployment flow is:
 
@@ -397,21 +414,19 @@ Automatic Sync
 EKS Staging
 ```
 
-This allows new builds to be automatically deployed to the staging environment.
+This allows new builds to be automatically deployed to staging.
 
-## Production Deployment
+# Production Deployment
 
 Production is intentionally configured differently from staging.
 
 Automatic synchronization is disabled for the production Argo CD application.
 
-Jenkins still updates the production Kubernetes manifest and pushes the change to GitHub.
+Jenkins updates the production Kubernetes deployment manifest and pushes the change to GitHub, but Argo CD does not automatically deploy the change.
 
-However, Argo CD does not automatically deploy the change to production.
+After staging has been verified, the production application can be manually synchronized from the Argo CD interface.
 
-After the staging environment has been verified, the production application can be manually synchronized from Argo CD.
-
-The production flow is:
+The production deployment flow is:
 
 ```text
 Jenkins
@@ -432,105 +447,21 @@ Manual Sync
 EKS Production
 ```
 
-This provides an additional control before a change is deployed to production.
+This provides an additional control before changes are deployed to production.
 
-A manual approval stage inside Jenkins was not implemented. Production deployment is controlled through the manual synchronization option in Argo CD.
+A Jenkins manual approval stage was not implemented. Production deployment is controlled through the manual synchronization mechanism in Argo CD.
 
-## Amazon EKS
+# Part 3: Monitoring and Logging
 
-Amazon EKS is used as the Kubernetes platform for running the Expense Tracker application.
-
-The EKS cluster hosts the application workloads.
-
-The application is deployed using Kubernetes Deployments and Services.
-
-Multiple replicas are used for the application to improve availability.
-
-The cluster can be checked using:
-
-```bash
-kubectl get nodes
-```
-
-Application Pods can be checked using:
-
-```bash
-kubectl get pods -A
-```
-
-Services can be checked using:
-
-```bash
-kubectl get svc -A
-```
-
-Deployments can be checked using:
-
-```bash
-kubectl get deployments
-```
-
-## Kubernetes Deployment
-
-The Kubernetes configuration is separated into staging and production environments.
-
-The structure is:
-
-```text
-k8s/
-
-    staging/
-        deployment.yaml
-
-    production/
-        deployment.yaml
-```
-
-The Kubernetes deployment defines the application container and the number of replicas.
-
-The Service provides network access to the application.
-
-Kubernetes Secrets are used for sensitive application configuration.
-
-## Amazon RDS PostgreSQL
-
-PostgreSQL is used as the application's persistent database.
-
-The database is hosted using Amazon RDS for PostgreSQL.
-
-The application running inside EKS connects to the RDS PostgreSQL database.
-
-The database stores the application's persistent expense data.
-
-Using RDS instead of running PostgreSQL inside a Kubernetes Pod provides a managed database service and separates persistent database storage from the application containers.
-
-## Database Security
-
-The RDS database is protected using AWS Security Groups.
-
-The database should only accept PostgreSQL traffic from the required application resources.
-
-The database is kept in private networking and is not intended to be directly accessible from the public internet.
-
-Database credentials are not stored directly in the application source code.
-
-Sensitive database configuration is provided to Kubernetes using Secrets.
-
-## Monitoring and Logging
+## Amazon CloudWatch
 
 Amazon CloudWatch is used for monitoring and logging of the EKS environment.
 
 The Amazon CloudWatch Observability Controller was installed and configured inside the EKS cluster.
 
-The controller manages the CloudWatch observability components required to collect telemetry from the Kubernetes environment.
+The controller manages the CloudWatch observability components required to collect metrics and logs from the Kubernetes environment.
 
-The CloudWatch components were verified using:
-
-```bash
-kubectl get pods -n amazon-cloudwatch
-```
-
-The monitoring flow is:
+The monitoring architecture is:
 
 ```text
 Amazon EKS
@@ -545,47 +476,140 @@ CloudWatch Agent
 Amazon CloudWatch
 ```
 
-The monitoring setup provides visibility into Kubernetes and container-level metrics and logs.
+The CloudWatch components were verified using:
 
-## CloudWatch Metrics
+```bash
+kubectl get pods -n amazon-cloudwatch
+```
 
-The CloudWatch setup provides visibility into the EKS environment.
+The CloudWatch Agent was running successfully inside the EKS cluster.
 
-The monitoring information can be used to observe:
+## Monitoring Metrics
+
+The CloudWatch observability setup provides visibility into the EKS environment and container workloads.
+
+The monitoring data can be used to observe:
 
 * CPU utilization
 * Memory utilization
 * Container metrics
 * Kubernetes workloads
+* Node-level metrics
 * Application and container logs
 
-This information can be used to troubleshoot application and infrastructure issues.
+Amazon RDS PostgreSQL also provides database monitoring through CloudWatch.
 
-## CloudWatch Dashboards
+Important database metrics include:
 
-CloudWatch provides a centralized location for viewing the collected EKS metrics and logs.
+* CPU utilization
+* Database connections
+* Storage usage
+* Read operations
+* Write operations
+* Network activity
 
-The CloudWatch Observability Controller is responsible for collecting and sending the required observability data from EKS to CloudWatch.
+# CloudWatch Dashboards
 
-Additional dashboards and alarms can be configured based on the available metrics and the monitoring requirements of the application.
+Two CloudWatch dashboards were configured to provide visibility into the application environment.
 
-## Security
+## Dashboard 1: EKS Infrastructure Monitoring
+
+The first dashboard focuses on the EKS infrastructure and Kubernetes environment.
+
+It provides visibility into resource utilization and the health of the Kubernetes workloads.
+
+The dashboard includes monitoring for areas such as:
+
+* CPU utilization
+* Memory utilization
+* Container resource usage
+* Kubernetes workload metrics
+* Node-level metrics
+* EKS infrastructure health
+
+This dashboard helps identify resource utilization problems and infrastructure-related issues.
+
+## Dashboard 2: Application and Database Monitoring
+
+The second dashboard focuses on application and database health.
+
+It provides visibility into application/container activity and the RDS PostgreSQL database.
+
+The dashboard includes monitoring for areas such as:
+
+* Application and container logs
+* Application resource usage
+* RDS CPU utilization
+* RDS database connections
+* RDS storage usage
+* RDS read activity
+* RDS write activity
+
+This dashboard helps identify application and database-related issues.
+
+## Logging
+
+Application and container logs are collected through the CloudWatch observability setup.
+
+Centralized logging makes it possible to investigate issues without manually checking every Kubernetes Pod.
+
+The logs can be used to troubleshoot:
+
+* Application errors
+* Pod failures
+* Container failures
+* Deployment issues
+* Runtime issues
+
+# Monitoring Flow
+
+The complete monitoring flow is:
+
+```text
+Application
+    |
+    v
+Kubernetes Pod
+    |
+    v
+CloudWatch Observability Controller
+    |
+    v
+CloudWatch Agent
+    |
+    v
+Amazon CloudWatch
+    |
+    +---- Metrics
+    |
+    +---- Logs
+    |
+    +---- Dashboard 1
+    |
+    +---- Dashboard 2
+```
+
+# Part 4: Documentation and Best Practices
+
+## Security Considerations
 
 Security was considered across the infrastructure, CI/CD pipeline, container, Kubernetes environment, and database.
 
-Security Groups are used to restrict network access.
+Security Groups are used to control network access.
 
 The RDS database is kept in private networking.
 
 Docker images are scanned using Trivy before being pushed to Docker Hub.
 
-GitHub credentials are stored in Jenkins Credentials.
+GitHub credentials are stored securely in Jenkins Credentials.
 
-Docker Hub credentials are stored in Jenkins Credentials.
+Docker Hub credentials are stored securely in Jenkins Credentials.
 
-Database credentials are handled using Kubernetes Secrets.
+Database credentials are stored using Kubernetes Secrets.
 
 Sensitive credentials are not committed to GitHub.
+
+Production Argo CD automatic synchronization is disabled to provide manual control over production deployments.
 
 ## Secret Management
 
@@ -594,64 +618,68 @@ Jenkins Credentials are used to securely store:
 * GitHub credentials
 * Docker Hub credentials
 
-The credentials are accessed by Jenkins only when required by the pipeline.
+The Jenkins pipeline accesses these credentials only when required.
 
 Database credentials are provided to the Kubernetes application using Kubernetes Secrets.
 
-Sensitive values should not be stored directly in the source code or committed to GitHub.
+Sensitive credentials are not stored directly in the application source code.
+
+For a larger production environment, AWS Secrets Manager could be used for centralized secret management.
 
 ## Backup Strategy
 
 The application database is hosted on Amazon RDS PostgreSQL.
 
-RDS provides managed database capabilities and supports automated backup functionality.
+RDS provides automated backup capabilities.
 
-For a production environment, an appropriate backup retention period should be configured according to the required recovery objectives.
+For a production environment, an appropriate backup retention period should be configured based on the application's recovery requirements.
 
-Database restoration should also be tested periodically in a production environment.
+Database restoration should also be tested periodically to verify that backups can be successfully used during a recovery scenario.
 
 ## Cost Optimization
 
-The project was implemented as an assignment environment, so cost management is important.
+The project was implemented as a technical assignment, so unnecessary AWS resource usage should be avoided.
 
-The following practices were considered:
+The following cost optimization practices were considered:
 
-* Use appropriate AWS resource sizes.
-* Avoid running unused resources.
+* Use appropriate resource sizes.
+* Avoid running unused EKS resources.
 * Delete unused Load Balancers.
-* Delete unused NAT Gateways.
-* Remove temporary EKS resources after testing.
+* Delete unused NAT Gateways when the environment is no longer required.
 * Monitor RDS usage.
 * Monitor CloudWatch log usage.
-* Remove the environment after completing the assignment when it is no longer required.
+* Remove temporary resources after testing.
+* Destroy assignment infrastructure after completion when it is no longer required.
 
-AWS resources such as EKS, RDS, NAT Gateway, Load Balancers, and CloudWatch can generate charges even when they are not actively being used.
+Resources such as EKS, RDS, NAT Gateway, Load Balancers, and CloudWatch can generate charges even when the application is not actively being used.
 
-## Challenges Faced
+# Challenges Faced and Resolutions
 
-### Terraform Resource Dependencies
+## Terraform Destroy Dependency Issues
 
-During Terraform destroy, some resources could not be deleted because dependencies still existed inside the VPC.
+During infrastructure cleanup, Terraform was unable to delete the VPC because dependencies still existed.
 
-Terraform initially reported dependency errors while attempting to delete the subnets and VPC.
+Terraform reported dependency violations while attempting to delete subnets, the Internet Gateway, and the VPC.
 
-AWS CLI was used to identify the remaining resources and determine what was preventing deletion.
+AWS CLI was used to identify the resources that were still associated with the VPC.
 
-### Kubernetes Load Balancers
+## Kubernetes Load Balancers
 
-Kubernetes-created Load Balancers created Elastic Network Interfaces inside the VPC.
+The Kubernetes environment had created AWS Load Balancers.
 
-These network interfaces prevented the associated subnets from being deleted.
+These Load Balancers created Elastic Network Interfaces inside the VPC.
+
+The network interfaces prevented the associated subnets from being deleted.
 
 The Load Balancers were identified using AWS CLI.
 
-After confirming that they were no longer required, they were deleted.
+After confirming that they were no longer required, the Load Balancers were deleted.
 
-The associated network interfaces were then removed automatically.
+The associated network interfaces were then removed.
 
-### Kubernetes Security Groups
+## Kubernetes Security Groups
 
-Security groups created by Kubernetes for the Load Balancers also remained in the VPC.
+Kubernetes-created security groups were also present in the VPC.
 
 They were identified using Kubernetes-related tags such as:
 
@@ -661,47 +689,41 @@ kubernetes.io/cluster/ekscluster
 
 After confirming that the Load Balancers had been removed and the security groups were no longer required, the unused security groups were deleted.
 
-### NAT Gateway
+## NAT Gateway
 
-The NAT Gateway was also checked during the cleanup process.
+The NAT Gateway was checked during the cleanup process.
 
-Its state was verified using:
+Its state was verified using the AWS CLI.
 
-```bash
-aws ec2 describe-nat-gateways \
-    --region us-east-1 \
-    --filter Name=vpc-id,Values=<VPC_ID>
-```
+The NAT Gateway was confirmed to be in the deleted state before continuing with the remaining VPC cleanup.
 
-The NAT Gateway was confirmed to be in the deleted state.
+## Terraform State and External Resources
 
-### Terraform State and Manually Created Resources
+Another challenge was that not all AWS resources visible in the VPC were managed by the current Terraform state.
 
-Another important issue was that some AWS resources existed in the environment but were not present in the current Terraform state.
-
-For example, the Terraform state contained:
+The Terraform state contained:
 
 ```text
 aws_vpc.main
 ```
 
-while some Kubernetes-created AWS resources such as Load Balancers and their security groups were outside the Terraform state.
+while some Kubernetes-created resources, such as Load Balancers and their security groups, were outside the Terraform state.
 
-This caused dependencies during Terraform destroy.
+This resulted in dependencies during Terraform destroy.
 
-The AWS CLI was used to identify and remove resources that were no longer required.
+AWS CLI was used to identify these resources and remove resources that were no longer required.
 
-This highlighted the importance of keeping Terraform state synchronized with the resources that are intended to be managed by Terraform.
+This highlighted the importance of clearly defining resource ownership and maintaining consistent Terraform state management.
 
-## Verification Commands
+# Verification Commands
 
-### Check AWS EKS Clusters
+## Check EKS Cluster
 
 ```bash
 aws eks list-clusters --region us-east-1
 ```
 
-### Configure kubectl
+## Configure kubectl
 
 ```bash
 aws eks update-kubeconfig \
@@ -709,49 +731,47 @@ aws eks update-kubeconfig \
     --name ekscluster
 ```
 
-### Check Kubernetes Nodes
+## Check Kubernetes Nodes
 
 ```bash
 kubectl get nodes
 ```
 
-### Check Kubernetes Pods
+## Check Kubernetes Pods
 
 ```bash
 kubectl get pods -A
 ```
 
-### Check Kubernetes Services
+## Check Kubernetes Services
 
 ```bash
 kubectl get svc -A
 ```
 
-### Check Argo CD Pods
+## Check Argo CD
 
 ```bash
 kubectl get pods -n argocd
 ```
 
-### Check Argo CD Applications
-
 ```bash
 kubectl get applications -n argocd
 ```
 
-### Check CloudWatch Components
+## Check CloudWatch Components
 
 ```bash
 kubectl get pods -n amazon-cloudwatch
 ```
 
-### Check Application Logs
+## Check Application Logs
 
 ```bash
 kubectl logs <pod-name>
 ```
 
-## Project Structure
+# Project Structure
 
 The application repository contains the following major components:
 
@@ -783,31 +803,26 @@ The Terraform infrastructure is maintained separately:
 8byte_terraform/
 
     main.tf
-
     variables.tf
-
     outputs.tf
-
     providers.tf
-
     terraform.tfvars
 ```
 
-## Assignment Requirement Coverage
+# Assignment Requirement Coverage
 
 | Assignment Requirement               | Implementation                             |
 | ------------------------------------ | ------------------------------------------ |
-| VPC with public and private subnets  | Implemented using Terraform                |
-| EC2, ECS or EKS                      | Amazon EKS                                 |
-| RDS PostgreSQL                       | Amazon RDS PostgreSQL                      |
-| Security Groups                      | AWS Security Groups                        |
-| Load Balancer                        | AWS/Kubernetes Load Balancer               |
+| VPC                                  | Implemented using Terraform                |
+| Public and private subnets           | Implemented                                |
+| Application hosting                  | Amazon EKS                                 |
+| PostgreSQL database                  | Amazon RDS PostgreSQL                      |
+| Security Groups                      | Implemented                                |
+| Load Balancer                        | Implemented                                |
 | variables.tf                         | Implemented                                |
-| Terraform state management           | Terraform state                            |
+| Terraform state management           | Implemented                                |
 | Terraform outputs                    | Implemented                                |
 | CI/CD pipeline                       | Jenkins                                    |
-| Tests on PR creation                 | Not implemented                            |
-| Unit and integration tests           | Not implemented in current pipeline        |
 | Docker image build                   | Implemented                                |
 | Container registry                   | Docker Hub                                 |
 | Container vulnerability scanning     | Trivy                                      |
@@ -816,60 +831,55 @@ The Terraform infrastructure is maintained separately:
 | Production deployment                | Argo CD                                    |
 | Production automatic synchronization | Disabled                                   |
 | Production deployment control        | Manual Argo CD synchronization             |
-| Jenkins production approval stage    | Not implemented                            |
-| Slack/email notifications            | Not implemented                            |
 | Infrastructure monitoring            | Amazon CloudWatch                          |
 | EKS monitoring                       | CloudWatch Observability Controller        |
-| Container monitoring                 | CloudWatch                                 |
-| Application/container logs           | Amazon CloudWatch                          |
-| Database                             | Amazon RDS PostgreSQL                      |
+| Centralized logging                  | Amazon CloudWatch                          |
+| Database monitoring                  | Amazon RDS and CloudWatch                  |
+| CloudWatch dashboards                | Two dashboards                             |
 | Secret management                    | Jenkins Credentials and Kubernetes Secrets |
 | Backup strategy                      | Amazon RDS                                 |
-| Cost optimization                    | Implemented and documented                 |
+| Cost optimization                    | Documented                                 |
 | Challenges and resolutions           | Documented                                 |
 
-## Future Improvements
+# Limitations and Future Improvements
 
 The following improvements could be added to make the solution more suitable for a production environment:
 
 * Add unit tests to the Jenkins pipeline.
-* Add integration tests to the CI pipeline.
-* Configure Jenkins to run automatically for Pull Requests.
-* Add a manual Jenkins approval stage before production deployment.
-* Add Slack or email notifications for pipeline failures.
-* Configure dedicated CloudWatch dashboards for infrastructure and application monitoring.
-* Configure CloudWatch alarms for important metrics.
-* Add application-level metrics for request rate, error rate, and latency.
-* Use AWS Secrets Manager for production database credentials.
+* Add integration tests.
+* Configure Jenkins to trigger automatically for Pull Requests.
+* Add a manual approval stage in Jenkins before production deployment.
+* Configure Slack or email notifications for pipeline failures.
+* Add custom application metrics for request rate, error rate, and latency.
+* Configure CloudWatch alarms for important infrastructure and application metrics.
+* Improve CloudWatch dashboards with additional application-specific metrics.
+* Use AWS Secrets Manager for production secrets.
 * Enable HTTPS using an SSL/TLS certificate.
 * Configure Kubernetes Horizontal Pod Autoscaling.
 * Implement a complete disaster recovery strategy.
-* Use separate AWS accounts for staging and production environments.
-* Implement stricter vulnerability policies for production deployments.
+* Use separate AWS accounts for staging and production.
+* Add stricter security policies for production deployments.
 
-## Conclusion
+# Conclusion
 
-This project demonstrates an end-to-end DevOps workflow for an Expense Tracker application.
+This project demonstrates an end-to-end DevOps implementation for an Expense Tracker application.
 
-Terraform is used to provision the AWS infrastructure.
+Terraform is used to provision the AWS infrastructure, including the VPC, networking components, security groups, and supporting AWS resources.
 
-Jenkins automates the application build, Docker image creation, vulnerability scanning, image publishing, and Kubernetes manifest updates.
+Jenkins automates the application build, Docker image creation, vulnerability scanning, Docker image publishing, and Kubernetes manifest updates.
 
 Docker is used for application containerization and Docker Hub is used as the container registry.
 
-Argo CD provides GitOps-based Continuous Deployment to Amazon EKS.
+Amazon EKS provides the Kubernetes platform for running the application.
 
-Staging is configured with automatic Argo CD synchronization, while production automatic synchronization is disabled. Production changes are manually synchronized through Argo CD after staging has been verified.
+Argo CD provides GitOps-based Continuous Deployment. Staging is configured with automatic synchronization, while production automatic synchronization is disabled. Production deployment is manually synchronized through Argo CD after staging verification.
 
 Amazon RDS PostgreSQL provides persistent database storage for the application.
 
-Amazon CloudWatch Observability Controller is configured inside EKS to provide monitoring and logging for the Kubernetes environment.
+Amazon CloudWatch Observability Controller is configured inside the EKS cluster to provide monitoring and logging capabilities through Amazon CloudWatch.
 
-The project also involved troubleshooting real AWS and Kubernetes dependency issues, including Load Balancers, Network Interfaces, Security Groups, NAT Gateway cleanup, and Terraform state management.
+Two CloudWatch dashboards provide visibility into the EKS infrastructure and application/database environment.
 
-Overall, the project demonstrates practical experience with Infrastructure as Code, CI/CD, Docker, Kubernetes, AWS EKS, GitOps, database integration, container security, monitoring, and troubleshooting.
+The project also involved troubleshooting real AWS and Kubernetes resource dependency issues during infrastructure cleanup, including Load Balancers, Network Interfaces, Security Groups, NAT Gateway resources, and Terraform state.
 
-
-
-
-
+Overall, the project demonstrates practical experience with Infrastructure as Code, CI/CD, Docker, Kubernetes, AWS, GitOps, container security, database integration, monitoring, logging, and troubleshooting.
